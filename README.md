@@ -10,7 +10,7 @@ Details on the usage of the scripts within this repo can be found in the `script
 
 ### Authors
 Mehul Modi <@memodi on Github>
-
-Nathan Weinberg <@nathan-weinberg on GitHub>
-
 Amogh Rameshappa Devapura <@Amoghrd on GitHub>
+Kapil Jain <@kapjain-rh on GitHub>
+Oliver Smakal <@oliver-smakal on GitHub>
+
