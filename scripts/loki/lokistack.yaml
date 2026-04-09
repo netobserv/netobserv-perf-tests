@@ -51,6 +51,7 @@ objects:
               value: reserved
               effect: NoExecute
         ingester:
+          replicas: 2
           nodeAffinity:
             preferredDuringSchedulingIgnoredDuringExecution:
               - weight: 100
