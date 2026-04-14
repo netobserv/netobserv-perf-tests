@@ -316,8 +316,14 @@ deploy_lokistack() {
     SIZE="1x.extra-small"
   fi
 
+  if [[ -z $INGESTER_REPLICAS ]]; then
+    echo "====> No ingester replicas config was found - using '2'"
+    echo "====> To set config, set INGESTER_REPLICAS variable to desired number"
+    export INGESTER_REPLICAS=2
+  fi
+
   echo "====> Creating LokiStack"
-  oc process --ignore-unknown-parameters=true -f $SCRIPTS_DIR/loki/lokistack.yaml -p SIZE=$SIZE DEFAULT_SC=$DEFAULT_SC NAMESPACE=$LOKI_NS -n default -o yaml >"$ARTIFACT_DIR"/lokiStack.yaml
+  oc process --ignore-unknown-parameters=true -f $SCRIPTS_DIR/loki/lokistack.yaml -p SIZE=$SIZE DEFAULT_SC=$DEFAULT_SC NAMESPACE=$LOKI_NS INGESTER_REPLICAS=$INGESTER_REPLICAS -n default -o yaml >"$ARTIFACT_DIR"/lokiStack.yaml
   oc apply -f "$ARTIFACT_DIR"/lokiStack.yaml -n $LOKI_NS
   sleep 30
   echo "====> Waiting lokistack to be ready"

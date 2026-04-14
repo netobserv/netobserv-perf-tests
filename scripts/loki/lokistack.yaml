@@ -51,7 +51,7 @@ objects:
               value: reserved
               effect: NoExecute
         ingester:
-          replicas: 2
+          replicas: ${INGESTER_REPLICAS}
           nodeAffinity:
             preferredDuringSchedulingIgnoredDuringExecution:
               - weight: 100
@@ -158,3 +158,5 @@ parameters:
     value: "1x.extra-small"
   - name: DEFAULT_SC
     value: "gp3-csi"
+  - name: INGESTER_REPLICAS
+    value: "2"
