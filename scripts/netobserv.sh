@@ -321,7 +321,17 @@ deploy_lokistack() {
   oc apply -f "$ARTIFACT_DIR"/lokiStack.yaml -n $LOKI_NS
   sleep 30
   echo "====> Waiting lokistack to be ready"
-  lokistackReady=$(waitForResources "lokistack/lokistack" $LOKI_NS)
+  lokistackReady=1
+  while [ $timeout -lt 600 ]; do
+    status=$(oc get lokistack/lokistack -o jsonpath='{.status.conditions[?(@.type=="Pending")].status}' -n $LOKI_NS)
+    if [[ $status == "False" ]]; then
+      lokistackReady=0
+      break
+    fi
+    sleep 30
+    timeout=$((timeout+30))
+  done
+
   if [ "${lokistackReady}" == 1 ]; then
     echo "LokiStack did not become Ready after 600 secs!!!"
     return 1
