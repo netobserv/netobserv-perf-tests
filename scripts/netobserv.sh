@@ -322,6 +322,7 @@ deploy_lokistack() {
   sleep 30
   echo "====> Waiting lokistack to be ready"
   lokistackReady=1
+  timeout=0
   while [ $timeout -lt 600 ]; do
     status=$(oc get lokistack/lokistack -o jsonpath='{.status.conditions[?(@.type=="Pending")].status}' -n $LOKI_NS)
     if [[ $status == "False" ]]; then
