@@ -30,3 +30,13 @@ ack:
   - uuid: 15e45d52-4bb6-4c01-9f3e-65ae57ff818f
     metric: rssEBPFTotals_avg
     reason: Bug NETOBSERV-2597 for NDH
+  - uuid: 5a16116c-85c8-4d88-a49c-c3cccc556743
+    metric: rssEBPFTotals_avg
+    reason: Bug NETOBSERV-2733 for kafka compression
+  - uuid: 5a16116c-85c8-4d88-a49c-c3cccc556743
+    metric: workingsetEBPFTotals_avg
+    reason: Bug NETOBSERV-2733 for kafka compression
+  - uuid: c244827f-743e-44c9-9214-fea1cff4c00d
+    metric: rssEBPFTotals_avg
+    reason: Bug NETOBSERV-2733 for kafka compression
+
