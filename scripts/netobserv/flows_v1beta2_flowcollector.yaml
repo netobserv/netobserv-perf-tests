@@ -53,7 +53,7 @@ parameters:
   - name: EBPFPrivileged
     value: "true"
   - name: EBPFeatures
-    value: '["PacketDrop","DNSTracking","FlowRTT","NetworkEvents","PacketTranslation","UDNMapping","IPSec"]'
+    value: '["PacketDrop","DNSTracking","FlowRTT","NetworkEvents","PacketTranslation","UDNMapping","IPSec","TLSTracking"]'
   - name: FLPMemoryLimit
     value: "800Mi"
   - name: KafkaConsumerReplicas
