@@ -39,4 +39,10 @@ ack:
   - uuid: c244827f-743e-44c9-9214-fea1cff4c00d
     metric: rssEBPFTotals_avg
     reason: Bug NETOBSERV-2733 for kafka compression
+  - uuid: 5258d899-142e-4893-85b7-b29847791ff8
+    metric: nFlowsProcessedTotals_max
+    reason: Skipping, close to the 10% limit
+  - uuid: 5258d899-142e-4893-85b7-b29847791ff8
+    metric: nFlowsProcessedPerMinuteTotals_max
+    reason: Skipping, close to the 10% limit
 
