@@ -45,4 +45,9 @@ ack:
   - uuid: 5258d899-142e-4893-85b7-b29847791ff8
     metric: nFlowsProcessedPerMinuteTotals_max
     reason: Skipping, close to the 10% limit
-
+  - uuid: 38810c48-6827-45ce-9485-410f4e149d57
+    metric: TotalClusterCPUUsage_avg
+    reason: CD-v2;instance type change from m6i.4xlarge to m6a.2xlarge 
+  - uuid: 6e47ef16-ffad-4f25-9146-eebeda13f40c
+    metric: TotalClusterCPUUsage_avg
+    reason: NDH;instance type change from m6i.4xlarge to m6a.2xlarge 
