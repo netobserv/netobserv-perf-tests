@@ -70,7 +70,6 @@ deploy_netobserv() {
   # when using Internal builds, patch csv with images
   # of same sha256 of quay.io instead registry.redhat.io
   patch_unreleased_images
-  patch_netobserv "metrics" "true"
 }
 
 createFlowCollector() {
@@ -124,12 +123,9 @@ patch_netobserv() {
     OVERRIDE_VAR="RELATED_IMAGE_FLOWLOGS_PIPELINE"
   elif [[ "$COMPONENT" == "plugin" ]]; then
     echo "====> Patching Plugin image"
-    OVERRIDE_VAR="RELATED_IMAGE_CONSOLE_PLUGIN"
-  elif [[ "$COMPONENT" == "metrics" ]]; then
-    echo "====> Patching DOWNSTREAM_DEPLOYMENT for metrics"
-    OVERRIDE_VAR="DOWNSTREAM_DEPLOYMENT"
+    OVERRIDE_VAR="RELATED_IMAGE_WEB_CONSOLE"
   else
-    echo "Use component ebpf, flp, plugin, operator, metrics as component to patch or to have metrics populated for upstream installation to cluster prometheus"
+    echo "Use component ebpf, flp, plugin, operator as component to patch"
     return 1
   fi
 
@@ -156,14 +152,14 @@ patch_unreleased_images(){
     RELATED_IMAGE_EBPF_AGENT=${RELATED_IMAGE_EBPF_AGENT#*@}
     RELATED_IMAGE_FLOWLOGS_PIPELINE=$(oc -n openshift-netobserv-operator get csv/$CSV -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[?(@.name=="RELATED_IMAGE_FLOWLOGS_PIPELINE")].value}')
     RELATED_IMAGE_FLOWLOGS_PIPELINE=${RELATED_IMAGE_FLOWLOGS_PIPELINE#*@}
-    RELATED_IMAGE_CONSOLE_PLUGIN=$(oc -n openshift-netobserv-operator get csv/$CSV -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[?(@.name=="RELATED_IMAGE_CONSOLE_PLUGIN")].value}')
-    RELATED_IMAGE_CONSOLE_PLUGIN=${RELATED_IMAGE_CONSOLE_PLUGIN#*@}
+    RELATED_IMAGE_WEB_CONSOLE=$(oc -n openshift-netobserv-operator get csv/$CSV -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[?(@.name=="RELATED_IMAGE_WEB_CONSOLE")].value}')
+    RELATED_IMAGE_WEB_CONSOLE=${RELATED_IMAGE_WEB_CONSOLE#*@}
     RELATED_IMAGE_OPERATOR=$(oc -n openshift-netobserv-operator get csv/$CSV -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].image}')
     RELATED_IMAGE_OPERATOR=${RELATED_IMAGE_OPERATOR#*@}
     
     patch_netobserv "ebpf" "$QUAY_URL/netobserv-ebpf-agent-$STREAM@$RELATED_IMAGE_EBPF_AGENT"
     patch_netobserv "flp" "$QUAY_URL/flowlogs-pipeline-$STREAM@$RELATED_IMAGE_FLOWLOGS_PIPELINE"
-    patch_netobserv "plugin" "$QUAY_URL/network-observability-console-plugin-$STREAM@$RELATED_IMAGE_CONSOLE_PLUGIN"
+    patch_netobserv "plugin" "$QUAY_URL/network-observability-console-plugin-$STREAM@$RELATED_IMAGE_WEB_CONSOLE"
     patch_netobserv "operator" "$QUAY_URL/network-observability-operator-$STREAM@$RELATED_IMAGE_OPERATOR"
   fi
 }
