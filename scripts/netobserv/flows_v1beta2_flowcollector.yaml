@@ -24,6 +24,8 @@ objects:
             cidr: 0.0.0.0/0
             enable: true
       processor:
+        informerCacheProxy:
+          enable: true
         resources:
           limits:
             memory: ${FLPMemoryLimit}

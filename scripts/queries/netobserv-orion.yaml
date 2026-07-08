@@ -7,6 +7,9 @@ tests:
       ocpVersion: "{{ version }}"
       jobType: "{{ jobtype }}"
       deployment_model: "{{ deployment_model }}"
+      pullNumber: 79326
+      # wildcard:
+      #   buildUrl: "*79326*"
     metrics:
       - name: nFlowsProcessedTotals
         metric_name: nFlowsProcessedTotals
@@ -108,6 +111,15 @@ tests:
           agg_type: avg
         direction: 1
         threshold: 10
+      - name: cpuFLPInformersTotals
+        metric_name: cpuFLPInformersTotals
+        timestamp: iso_timestamp
+        metric_of_interest: value
+        agg:
+          value: flp_informers_cpu
+          agg_type: avg
+        direction: 1
+        threshold: 10
       - name: cpuEBPFTotals
         metric_name: cpuEBPFTotals
         timestamp: iso_timestamp
@@ -162,12 +174,30 @@ tests:
           agg_type: avg
         direction: 1
         threshold: 10
+      - name: rssFLPInformersTotals
+        metric_name: rssFLPInformersTotals
+        timestamp: iso_timestamp
+        metric_of_interest: value
+        agg:
+          value: flp_informers_rss
+          agg_type: avg
+        direction: 1
+        threshold: 10
       - name: workingsetFLPTotals
         metric_name: workingsetFLPTotals
         timestamp: iso_timestamp
         metric_of_interest: value
         agg:
           value: flp_ws
+          agg_type: avg
+        direction: 1
+        threshold: 10
+      - name: workingsetFLPInformersTotals
+        metric_name: workingsetFLPInformersTotals
+        timestamp: iso_timestamp
+        metric_of_interest: value
+        agg:
+          value: flp_informers_ws
           agg_type: avg
         direction: 1
         threshold: 10
@@ -303,6 +333,15 @@ tests:
         metric_of_interest: value
         agg:
           value: netobserv_cluster_mem_percent_util
+          agg_type: avg
+        direction: 1
+        threshold: 60
+      - name: NetObservAPIServerTraffic
+        metric_name: NetObservAPIServerTraffic
+        timestamp: iso_timestamp
+        metric_of_interest: value
+        agg:
+          value: netobserv_api_server_traffic
           agg_type: avg
         direction: 1
         threshold: 60
