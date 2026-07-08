@@ -115,15 +115,15 @@
 ###############
 
 # total CPU usage by FLP - per pod is not included here as that is collected above
-- query: sum(pod:container_cpu_usage:sum{namespace="netobserv", pod=~"flowlogs.*"})
+- query: sum(pod:container_cpu_usage:sum{namespace="netobserv", pod=~"flowlogs.*", pod!~"flowlogs-pipeline-informers.*"})
   metricName: cpuFLPTotals
 
 # total RSS by all FLP pods - per pod is not included here as that is collected above
-- query: sum(container_memory_rss{namespace="netobserv", container="", pod=~"flowlogs.*"})
+- query: sum(container_memory_rss{namespace="netobserv", container="", pod=~"flowlogs.*", pod!~"flowlogs-pipeline-informers.*"})
   metricName: rssFLPTotals
 
 # total working set memory by all FLP pods - per pod is not included here as that is collected above
-- query: sum(container_memory_working_set_bytes{namespace="netobserv", container="", pod=~"flowlogs.*"})
+- query: sum(container_memory_working_set_bytes{namespace="netobserv", container="", pod=~"flowlogs.*", pod!~"flowlogs-pipeline-informers.*"})
   metricName: workingsetFLPTotals
 
 # total CPU usage by FLP Informers - per pod is not included here as that is collected above
