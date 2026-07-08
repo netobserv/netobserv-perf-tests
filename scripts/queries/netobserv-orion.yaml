@@ -7,9 +7,6 @@ tests:
       ocpVersion: "{{ version }}"
       jobType: "{{ jobtype }}"
       deployment_model: "{{ deployment_model }}"
-      pullNumber: 79326
-      # wildcard:
-      #   buildUrl: "*79326*"
     metrics:
       - name: nFlowsProcessedTotals
         metric_name: nFlowsProcessedTotals
