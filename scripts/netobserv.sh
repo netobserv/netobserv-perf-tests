@@ -79,6 +79,7 @@ createFlowCollector() {
   oc process --ignore-unknown-parameters=true -f "$SCRIPTS_DIR"/netobserv/flows_v1beta2_flowcollector.yaml $templateParams -n default -o yaml >"$ARTIFACT_DIR"/flowcollector.yaml
   oc apply -f "$ARTIFACT_DIR"/flowcollector.yaml
   waitForFlowcollectorReady
+  oc get pods -n netobserv
 }
 
 waitForFlowcollectorReady() {
