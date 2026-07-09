@@ -25,7 +25,7 @@ objects:
             enable: true
       processor:
         informerCacheProxy:
-          enable: true
+          enabled: true
         resources:
           limits:
             memory: ${FLPMemoryLimit}
