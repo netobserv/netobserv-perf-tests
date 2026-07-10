@@ -115,17 +115,29 @@
 ###############
 
 # total CPU usage by FLP - per pod is not included here as that is collected above
-- query: sum(pod:container_cpu_usage:sum{namespace="netobserv", pod=~"flowlogs.*"})
+- query: sum(pod:container_cpu_usage:sum{namespace="netobserv", pod=~"flowlogs.*", pod!~"flowlogs-pipeline-informers.*"})
   metricName: cpuFLPTotals
 
 # total RSS by all FLP pods - per pod is not included here as that is collected above
-- query: sum(container_memory_rss{namespace="netobserv", container="", pod=~"flowlogs.*"})
+- query: sum(container_memory_rss{namespace="netobserv", container="", pod=~"flowlogs.*", pod!~"flowlogs-pipeline-informers.*"})
   metricName: rssFLPTotals
 
 # total working set memory by all FLP pods - per pod is not included here as that is collected above
-- query: sum(container_memory_working_set_bytes{namespace="netobserv", container="", pod=~"flowlogs.*"})
+- query: sum(container_memory_working_set_bytes{namespace="netobserv", container="", pod=~"flowlogs.*", pod!~"flowlogs-pipeline-informers.*"})
   metricName: workingsetFLPTotals
 
+# total CPU usage by FLP Informers - per pod is not included here as that is collected above
+
+- query: sum(pod:container_cpu_usage:sum{namespace="netobserv", pod=~"flowlogs-pipeline-informers.*"})
+  metricName: cpuFLPInformersTotals
+
+# total RSS by all FLP Informers - per pod is not included here as that is collected above
+- query: sum(container_memory_rss{namespace="netobserv", container="", pod=~"flowlogs-pipeline-informers.*"})
+  metricName: rssFLPInformersTotals
+
+# total working set memory by all FLP Informers - per pod is not included here as that is collected above
+- query: sum(container_memory_working_set_bytes{namespace="netobserv", container="", pod=~"flowlogs-pipeline-informers.*"})
+  metricName: workingsetFLPInformersTotals
 ####################
 # Operator metrics #
 ####################
@@ -249,3 +261,8 @@
 # NetObserv % memory usage as a factor total cluster memory usage
 - query: sum(label_replace((sum(container_memory_usage_bytes{namespace=~".*netobserv.*",  container=""}) / on() group_right() cluster:memory_usage_bytes:sum)*100, "resource", "memory_usage%", "prometheus", ".*")) by (resource)
   metricName: NetObservClusterMemPercentUtil
+
+# Total API Server traffic for netobserv
+- query: sum(rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace="default", DstK8S_Namespace="netobserv"}[2m]))
+  metricName: NetObservAPIServerTraffic
+  
