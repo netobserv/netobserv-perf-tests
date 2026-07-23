@@ -3,7 +3,16 @@ FROM registry.ci.openshift.org/ci/ocp-qe-perfscale-ci:latest
 COPY --from=opm-builder /bin/opm /usr/bin/opm
 COPY scripts scripts
 ENV HOME=/home/user
-RUN dnf install -y unzip && mkdir -p /home/user && curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip" && unzip awscli-bundle.zip && awscli-bundle/install -b $HOME/bin/aws
+ENV AWSCLI_VERSION=2.36.7
+ENV AWSCLI_CHECKSUM=d641283d37f1a2168457a9f26a20d4e29167652e9ab1719b37114ef1ebe859f4
+RUN dnf install -y unzip && mkdir -p /home/user && \
+    curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWSCLI_VERSION}.zip" -o "awscliv2.zip" && \
+    echo "${AWSCLI_CHECKSUM}  awscliv2.zip" | sha256sum --check && \
+    unzip awscliv2.zip && ./aws/install --bin-dir $HOME/bin --install-dir $HOME/aws-cli && \
+    rm -rf awscliv2.zip aws
 ENV PATH="$PATH:$HOME/bin"
-ADD https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 $HOME/bin/yq
-RUN chmod +x $HOME/bin/yq
+ENV YQ_VERSION=v4.53.3
+ENV YQ_CHECKSUM=fa52a4e758c63d38299163fbdd1edfb4c4963247918bf9c1c5d31d84789eded4
+RUN curl -fsSL "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" -o $HOME/bin/yq && \
+    echo "${YQ_CHECKSUM}  $HOME/bin/yq" | sha256sum --check && \
+    chmod +x $HOME/bin/yq

@@ -41,7 +41,7 @@ set_aws_credentials() {
     fi
 
     if [[ $AWS_ACCESS_KEY_ID == "" || ${AWS_SECRET_ACCESS_KEY} == "" ]]; then
-        echo "CreateAWSSecret: Error: option no value! AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY"
+        echo "CreateAWSSecret: Error: found one of the env vars unset: AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY"
         exit 1
     fi
 }
