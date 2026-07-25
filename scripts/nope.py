@@ -6,9 +6,9 @@ import json
 import yaml
 import uuid
 import time
+import ssl
 import urllib3
 import pathlib
-import jenkins
 import logging
 import argparse
 import requests
@@ -17,10 +17,18 @@ import subprocess
 import coloredlogs
 from elasticsearch import Elasticsearch
 
+# SSL certificate configuration
+# For in-cluster OpenShift: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+# For custom CA: set ES_CA_CERT or THANOS_CA_CERT env vars
+# Set *_VERIFY_CERTS=false to disable verification (not recommended)
+SA_CA_CERT = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+ES_CA_CERT = os.getenv("ES_CA_CERT")  # path to custom CA for ES, or None to use system CAs
+THANOS_CA_CERT = os.getenv("THANOS_CA_CERT", SA_CA_CERT)  # defaults to in-cluster SA CA
+ES_VERIFY_CERTS = os.getenv("ES_VERIFY_CERTS", "true").lower() != "false"
+THANOS_VERIFY_CERTS = os.getenv("THANOS_VERIFY_CERTS", "true").lower() != "false"
 
-# disable SSL and warnings
-os.environ["PYTHONHTTPSVERIFY"] = "0"
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+if not THANOS_VERIFY_CERTS:
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # directory constants
 ROOT_DIR = str(pathlib.Path(__file__).parent.parent)
@@ -41,11 +49,6 @@ START_TIME = None
 END_TIME = None
 STEP = None
 
-# jenkins env constants
-JENKINS_URL = "https://jenkins-csb-openshift-qe-mastern.dno.corp.redhat.com/"
-JENKINS_JOB = None
-JENKINS_BUILD = None
-JENKINS_SERVER = None
 NOO_BUNDLE_VERSION = None
 UUID = None
 SUPPORTED_WORKLOADS = [
@@ -62,7 +65,6 @@ DUMP_ONLY = False
 UPLOAD_FILE = None
 BASELINE_TO_FETCH = None
 BASELINE_TO_UPLOAD = None
-JENKINS_BUILD_URL = None
 UUID_REPLACEMENT_STR = None
 
 # default prom. retention is 15d
@@ -146,7 +148,8 @@ def run_query(metric_name, query, start_time, end_time):
     params = {"query": query, "start": start_time, "end": end_time, "step": STEP}
 
     # make request and return data
-    data = requests.get(endpoint, headers=headers, params=params, verify=False)
+    thanos_verify = THANOS_CA_CERT if (THANOS_VERIFY_CERTS and os.path.exists(THANOS_CA_CERT)) else THANOS_VERIFY_CERTS
+    data = requests.get(endpoint, headers=headers, params=params, verify=thanos_verify, timeout=30)
     if data.status_code != 200:
         raise Exception(
             f"metricName '{metric_name}' with query '{query}'to fetch Prometheus data failed due to: {data.status_code} {data.reason}"
@@ -325,16 +328,25 @@ def format_data_for_upload():
     return payload
 
 
+def create_es_client():
+    """creates an Elasticsearch client with proper SSL/TLS configuration"""
+    kwargs = {
+        "timeout": 30,
+        "max_retries": 10,
+        "retry_on_timeout": True,
+    }
+    if not ES_VERIFY_CERTS:
+        kwargs["verify_certs"] = False
+    elif ES_CA_CERT and os.path.exists(ES_CA_CERT):
+        kwargs["ca_certs"] = ES_CA_CERT
+    return Elasticsearch([f"https://{ES_USERNAME}:{ES_PASSWORD}@{ES_URL}:443"], **kwargs)
+
+
 def upload_data_to_elasticsearch():
     """uploads captured data in RESULTS dictionary to Elasticsearch"""
 
     # create Elasticsearch object and attempt index
-    es = Elasticsearch(
-        [f"https://{ES_USERNAME}:{ES_PASSWORD}@{ES_URL}:443"],
-        timeout=30,
-        max_retries=10,
-        retry_on_timeout=True,
-    )
+    es = create_es_client()
 
     documents = format_data_for_upload()
     start = time.time()
@@ -359,12 +371,7 @@ def upload_baseline_to_elasticsearch(uuid):
     """uploads baseline data for a given UUID from Elasticsearch"""
 
     # create Elasticsearch object
-    es = Elasticsearch(
-        [f"https://{ES_USERNAME}:{ES_PASSWORD}@{ES_URL}:443"],
-        timeout=30,
-        max_retries=10,
-        retry_on_timeout=True,
-    )
+    es = create_es_client()
 
     # get netobserv release info from Elasticsearch based off UUID
     releaseRes = es.search(
@@ -397,7 +404,6 @@ def upload_baseline_to_elasticsearch(uuid):
         sys.exit(1)
 
     # parse out workload info from response object and log
-    # if workload is not explicitly set in jenkins data such as with legacy router-perf, take it from the job name
     try:
         workload = workloadRes["hits"]["hits"][0]["_source"]["benchmark"]
     except KeyError:
@@ -434,12 +440,7 @@ def fetch_baseline_from_elasticsearch(workload):
     """fetches baseline data for a given workload from Elasticsearch"""
 
     # create Elasticsearch object
-    es = Elasticsearch(
-        [f"https://{ES_USERNAME}:{ES_PASSWORD}@{ES_URL}:443"],
-        timeout=30,
-        max_retries=10,
-        retry_on_timeout=True,
-    )
+    es = create_es_client()
 
     # fetch most recent baseline for given workload
     baselineRes = es.search(
@@ -467,7 +468,6 @@ def fetch_baseline_from_elasticsearch(workload):
     # ensure data directory exists (create if not)
     pathlib.Path(DATA_DIR).mkdir(parents=True, exist_ok=True)
 
-    # dump baseline to JSON so it can be consumed by other actors such as Jenkins
     with open(DATA_DIR + f"/baseline.json", "w") as baseline_file:
         json.dump({"BASELINE_UUID": baseline_uuid}, baseline_file)
 
@@ -552,8 +552,7 @@ def main():
                 f"Error uploading to Elasticsearch server: {e}\nA local dump to {DATA_DIR}/data_{timestamp}.json will be done instead"
             )
             dump_data_locally(timestamp)
-            # using exit code of 2 here so that Jenkins pipeline can unqiuely identify this error
-            sys.exit(2)
+            sys.exit(1)
 
     # exit if no issues
     sys.exit(0)
@@ -741,11 +740,6 @@ if __name__ == "__main__":
     else:
         logging.info(f"Associating run with Jira ticket {JIRA}")
 
-    # set original Jenkins build url
-    JENKINS_BUILD_URL = os.getenv("BUILD_URL")
-    if not JENKINS_BUILD_URL:
-        JENKINS_BUILD_URL = "N/A"
-
     # get YAML file with queries and set queries constant with data from YAML file
     YAML_FILE = args.yaml_file
     logging.info(f"YAML_FILE: {YAML_FILE}")
@@ -794,7 +788,6 @@ if __name__ == "__main__":
             "No token could be found - ensure all the Prerequisite steps in the README were followed"
         )
         sys.exit(1)
-    logging.debug(f"TOKEN: {TOKEN}")
 
     # determine if data will be dumped locally or uploaded to Elasticsearch
     DUMP_ONLY = args.dump_only
