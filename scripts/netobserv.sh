@@ -75,8 +75,23 @@ deploy_netobserv() {
 createFlowCollector() {
   templateParams=$*
   echo "====> Creating Flow Collector"
+
+  echo "====> Creating secret-creator RoleBinding in netobserv"
+  oc create rolebinding secret-creator -n netobserv --clusterrole=netobserv-secret-creator --serviceaccount=netobserv:netobserv-controller-manager 2>/dev/null || true
+
   oc process --ignore-unknown-parameters=true -f "$SCRIPTS_DIR"/netobserv/flows_v1beta2_flowcollector.yaml $templateParams -n default -o yaml >"$ARTIFACT_DIR"/flowcollector.yaml
   oc apply -f "$ARTIFACT_DIR"/flowcollector.yaml
+
+  echo "====> Waiting for netobserv-privileged namespace"
+  timeout=0
+  while [ $timeout -lt 120 ]; do
+    oc get namespace netobserv-privileged 2>/dev/null && break
+    sleep 5
+    timeout=$((timeout+5))
+  done
+  echo "====> Creating secret-creator RoleBinding in netobserv-privileged"
+  oc create rolebinding secret-creator -n netobserv-privileged --clusterrole=netobserv-secret-creator --serviceaccount=netobserv:netobserv-controller-manager 2>/dev/null || true
+
   waitForFlowcollectorReady
   oc get pods -n netobserv
 }
@@ -340,6 +355,9 @@ deploy_lokistack() {
   fi
   echo "====> Configuring Loki rate limit alert"
   oc apply -f $SCRIPTS_DIR/loki/loki-ratelimit-alert.yaml
+
+  echo "====> Creating secret-watcher RoleBinding in $LOKI_NS"
+  oc create rolebinding secret-watcher -n $LOKI_NS --clusterrole=netobserv-secret-watcher --serviceaccount=netobserv:netobserv-controller-manager 2>/dev/null || true
 }
 
 deploy_downstream_catalogsource() {
@@ -408,6 +426,9 @@ deploy_kafka() {
   oc process -f $SCRIPTS_DIR/amq-streams/kafkaTopic.yaml -p TOPIC_PARTITIONS="$TOPIC_PARTITIONS" -n $KAFKA_NS | oc apply -n $KAFKA_NS -f -
   sleep 120
   oc wait --timeout=180s --for=condition=ready kafkatopic network-flows -n $KAFKA_NS || return 1
+
+  echo "====> Creating secret-watcher RoleBinding in $KAFKA_NS"
+  oc create rolebinding secret-watcher -n $KAFKA_NS --clusterrole=netobserv-secret-watcher --serviceaccount=netobserv:netobserv-controller-manager 2>/dev/null || true
 }
 
 delete_s3() {
