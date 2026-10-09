@@ -288,12 +288,12 @@ tests:
           agg_type: avg
         direction: 1
         threshold: 60
-      - name: TotalClusterRSSUsage
-        metric_name: TotalClusterRSSUsage
+      - name: TotalClusterMemoryUsage
+        metric_name: TotalClusterMemoryUsage
         timestamp: iso_timestamp
         metric_of_interest: value
         agg:
-          value: cluster_rss
+          value: cluster_mem
           agg_type: avg
         direction: 1
         threshold: 60

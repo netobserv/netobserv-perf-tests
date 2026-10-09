@@ -136,6 +136,32 @@ tests:
           agg_type: avg
         direction: 1
         threshold: 10
+      - name: totalFLPMemoryUsage
+        metric_name: totalFLPMemoryUsage
+        timestamp: iso_timestamp
+        metric_of_interest: value
+        agg:
+          value: flp_total_mem
+          agg_type: avg
+        direction: 1
+        threshold: 20
+      - name: rssFLPInformersTotals
+        metric_name: rssFLPInformersTotals
+        timestamp: iso_timestamp
+        metric_of_interest: value
+        agg:
+          value: flp_informers_rss
+          agg_type: avg
+        direction: 1
+        threshold: 10
+      - name: workingsetFLPInformersTotals
+        metric_name: workingsetFLPInformersTotals
+        metric_of_interest: value
+        agg:
+          value: flp_informers_ws
+          agg_type: avg
+        direction: 1
+        threshold: 10
       - name: rssEBPFTotals
         metric_name: rssEBPFTotals
         timestamp: iso_timestamp
@@ -154,6 +180,15 @@ tests:
           agg_type: avg
         direction: 1
         threshold: 10
+      - name: totalEBPFMemoryUsage
+        metric_name: totalEBPFMemoryUsage
+        timestamp: iso_timestamp
+        metric_of_interest: value
+        agg:
+          value: ebpf_total_mem
+          agg_type: avg
+        direction: 1
+        threshold: 20
       - name: rssPrometheusTotals
         metric_name: rssPrometheusTotals
         timestamp: iso_timestamp
@@ -208,12 +243,12 @@ tests:
           agg_type: avg
         direction: 1
         threshold: 60
-      - name: TotalClusterRSSUsage
-        metric_name: TotalClusterRSSUsage
+      - name: TotalClusterMemoryUsage
+        metric_name: TotalClusterMemoryUsage
         timestamp: iso_timestamp
         metric_of_interest: value
         agg:
-          value: cluster_rss
+          value: cluster_mem
           agg_type: avg
         direction: 1
         threshold: 60

@@ -25,7 +25,7 @@ tests:
         metric_name: TotalClusterMemoryUsage
         metric_of_interest: value
         agg:
-          value: cluster_rss
+          value: cluster_mem
           agg_type: avg
         direction: 1
         threshold: 10
@@ -47,6 +47,23 @@ tests:
           agg_type: avg
         direction: 1
         threshold: 20
+
+      - name: TotalPrometheusCPUUsage
+        metric_name: TotalPrometheusCPUUsage
+        metric_of_interest: value
+        agg:
+          value: prometheus_cpu
+          agg_type: avg
+        direction: 1
+        threshold: 60
+      - name: TotalPrometheusMemoryUsage
+        metric_name: TotalPrometheusMemoryUsage
+        metric_of_interest: value
+        agg:
+          value: prometheus_mem
+          agg_type: avg
+        direction: 1
+        threshold: 60
 
   # Trend analysis for cluster resource usage WITH NetObserv installed via CNO.
   # Matches day0 measurements where netobserv_enabled=true.
@@ -132,3 +149,163 @@ tests:
           agg_type: avg
         direction: 1
         threshold: 5
+
+      - name: nFlowsProcessedTotals
+        metric_name: nFlowsProcessedTotals
+        metric_of_interest: value
+        agg:
+          value: flow_count
+          agg_type: max
+        # fail if 10% flows processed in either direction
+        direction: 0
+        threshold: 20
+
+      - name: nFlowsProcessedPerMinuteTotals
+        metric_name: nFlowsProcessedPerMinuteTotals
+        metric_of_interest: value
+        agg:
+          value: flow_per_min_count
+          agg_type: max
+        direction: 0
+        threshold: 20
+
+      - name: nFlowsErroredRatio
+        metric_name: nFlowsErroredRatio
+        metric_of_interest: value
+        agg:
+          value: flow_error_ratio
+          agg_type: avg
+        direction: 1
+        threshold: 5
+
+      - name: ebpfFlowsDroppedRatio
+        metric_name: ebpfFlowsDroppedRatio
+        metric_of_interest: value
+        agg:
+          value: ebpf_flows_drop_ratio
+          agg_type: avg
+        direction: 1
+        threshold: 5
+      - name: ebpfRingBufferMapRatioTotals
+        metric_name: ebpfRingBufferMapRatioTotals
+        metric_of_interest: value
+        agg:
+          value: ebpf_ring_buffer_map_ratio
+          agg_type: avg
+        direction: 1
+        threshold: 5
+      - name: rssOperatorTotals
+        metric_name: rssOperatorTotals
+        metric_of_interest: value
+        agg:
+          value: noo_rss
+          agg_type: avg
+        direction: 1
+        threshold: 10
+      - name: rssFLPTotals
+        metric_name: rssFLPTotals
+        metric_of_interest: value
+        agg:
+          value: flp_rss
+          agg_type: avg
+        direction: 1
+        threshold: 10
+      - name: rssFLPInformersTotals
+        metric_name: rssFLPInformersTotals
+        metric_of_interest: value
+        agg:
+          value: flp_informers_rss
+          agg_type: avg
+        direction: 1
+        threshold: 10
+      - name: workingsetFLPTotals
+        metric_name: workingsetFLPTotals
+        metric_of_interest: value
+        agg:
+          value: flp_ws
+          agg_type: avg
+        direction: 1
+        threshold: 10
+      - name: totalFLPMemoryUsage
+        metric_name: totalFLPMemoryUsage
+        timestamp: iso_timestamp
+        metric_of_interest: value
+        agg:
+          value: flp_total_mem
+          agg_type: avg
+        direction: 1
+        threshold: 20
+      - name: rssFLPInformersTotals
+        metric_name: rssFLPInformersTotals
+        timestamp: iso_timestamp
+        metric_of_interest: value
+        agg:
+          value: flp_informers_rss
+          agg_type: avg
+        direction: 1
+        threshold: 10
+      - name: workingsetFLPInformersTotals
+        metric_name: workingsetFLPInformersTotals
+        metric_of_interest: value
+        agg:
+          value: flp_informers_ws
+          agg_type: avg
+        direction: 1
+        threshold: 10
+      - name: rssEBPFTotals
+        metric_name: rssEBPFTotals
+        metric_of_interest: value
+        agg:
+          value: ebpf_rss
+          agg_type: avg
+        direction: 1
+        threshold: 10
+      - name: workingsetEBPFTotals
+        metric_name: workingsetEBPFTotals
+        metric_of_interest: value
+        agg:
+          value: ebpf_ws
+          agg_type: avg
+        direction: 1
+        threshold: 10
+      - name: totalEBPFMemoryUsage
+        metric_name: totalEBPFMemoryUsage
+        timestamp: iso_timestamp
+        metric_of_interest: value
+        agg:
+          value: ebpf_total_mem
+          agg_type: avg
+        direction: 1
+        threshold: 20
+      - name: TotalPrometheusCPUUsage
+        metric_name: TotalPrometheusCPUUsage
+        metric_of_interest: value
+        agg:
+          value: prometheus_cpu
+          agg_type: avg
+        direction: 1
+        threshold: 60
+      - name: TotalPrometheusMemoryUsage
+        metric_name: TotalPrometheusMemoryUsage
+        metric_of_interest: value
+        agg:
+          value: prometheus_mem
+          agg_type: avg
+        direction: 1
+        threshold: 60
+      - name: metricsCardinality
+        metric_name: metricsCardinality
+        metric_of_interest: value
+        agg:
+          value: metrics_cardinality
+          agg_type: avg
+        direction: 0
+        threshold: 30
+      - name: flpMetricsCardinality
+        metric_name: flpMetricsCardinality
+        metric_of_interest: value
+        agg:
+          value: flp_metrics_cardinality
+          agg_type: avg
+        direction: 0
+        threshold: 30
