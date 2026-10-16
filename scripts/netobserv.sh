@@ -9,6 +9,53 @@ if [[ -z "${ARTIFACT_DIR}" ]]; then
   ARTIFACT_DIR=/tmp
 fi
 
+waitForPodReady() {
+  local label=$1
+  local namespace=$2
+  local timeout_seconds=${3:-300}
+
+  local timeout=0
+  while [ $timeout -lt $timeout_seconds ]; do
+    podList=$(oc get pod -l "$label" -n "$namespace" -o jsonpath='{.items[*].metadata.name}' 2>/dev/null)
+
+    if [[ -z "$podList" ]]; then
+      sleep 10
+      timeout=$((timeout+10))
+      continue
+    fi
+
+    readyStatuses=$(oc get pod -l "$label" -n "$namespace" -o jsonpath='{range .items[*]}{.status.conditions[?(@.type=="Ready")].status}{"\n"}{end}' 2>/dev/null)
+    totalPods=$(echo "$podList" | wc -w)
+    readyPods=$(echo "$readyStatuses" | grep -c "^True$" || echo 0)
+
+    if [[ $totalPods -gt 0 && $totalPods -eq $readyPods ]]; then
+      return 0
+    fi
+
+    sleep 10
+    timeout=$((timeout+10))
+  done
+  echo "====> Timeout waiting for pod with label '$label' in namespace '$namespace' to be ready"
+  return 1
+}
+
+waitForResource() {
+  local resource=$1
+  local name=$2
+  local namespace=$3
+  local timeout_seconds=${4:-300}
+
+  local timeout=0
+  while [ $timeout -lt $timeout_seconds ]; do
+    readyStatus=$(oc get "$resource" "$name" -n "$namespace" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
+    [[ "$readyStatus" == "True" ]] && return 0
+    sleep 10
+    timeout=$((timeout+10))
+  done
+  echo "====> Timeout waiting for $resource/$name in namespace $namespace to be ready"
+  return 1
+}
+
 deploy_netobserv() {
   echo "====> Creating NetObserv Project (if it does not already exist)"
   oc new-project netobserv || true
@@ -60,20 +107,15 @@ deploy_netobserv() {
     timeout=$((timeout+10))
   done
 
-  oc wait --timeout=180s --for=condition=ready pod -l app=netobserv-operator -n openshift-netobserv-operator || return 1
+  waitForPodReady "app=netobserv-operator" "openshift-netobserv-operator" || return 1
   timeout=0
   while [ $timeout -lt 300 ]; do
     oc get crd/flowcollectors.flows.netobserv.io && break
     sleep 10
     timeout=$((timeout+10))
   done
-  
-  timeout=0
-  while [ $timeout -lt 300 ]; do
-    oc get pod -l app=netobserv-plugin-static -n openshift-netobserv-operator | grep Running && break
-    sleep 10
-    timeout=$((timeout+10))
-  done
+
+  waitForPodReady "app=netobserv-plugin-static" "openshift-netobserv-operator" || return 1
   # when using Internal builds, patch csv with images
   # of same sha256 of quay.io instead registry.redhat.io
   patch_unreleased_images
@@ -121,10 +163,32 @@ waitForFlowcollectorReady() {
     timeout=$((timeout+30))
     echo "====> ebpf agents are not ready after $timeout, checking again..."
   done
-  oc wait --timeout=1200s --for=condition=ready flowcollector cluster || return 1
+  waitForResource "flowcollector" "cluster" "netobserv" 1200 || return 1
 
   echo "====> Waiting for all pods in netobserv namespace to be ready"
-  oc wait --timeout=300s --for=condition=ready pod --all -n netobserv || return 1
+  timeout=0
+  while [ $timeout -lt 300 ]; do
+    podList=$(oc get pod -n netobserv -o jsonpath='{.items[*].metadata.name}' 2>/dev/null)
+    if [[ -z "$podList" ]]; then
+      sleep 10
+      timeout=$((timeout+10))
+      echo "====> Waiting for pods to be ready ($timeout/300s): No pods found yet"
+      continue
+    fi
+
+    readyStatuses=$(oc get pod -n netobserv -o jsonpath='{range .items[*]}{.status.conditions[?(@.type=="Ready")].status}{"\n"}{end}' 2>/dev/null)
+    totalPods=$(echo "$podList" | wc -w)
+    readyPods=$(echo "$readyStatuses" | grep -c "^True$" || echo 0)
+
+    if [[ $totalPods -gt 0 && $totalPods -eq $readyPods ]]; then
+      break
+    fi
+    sleep 10
+    timeout=$((timeout+10))
+    echo "====> Waiting for pods to be ready ($timeout/300s): Ready=$readyPods/$totalPods"
+  done
+  [[ $timeout -ge 300 ]] && { echo "====> Timeout waiting for all pods in netobserv namespace to be ready"; return 1; }
+  return 0
 }
 
 patch_netobserv() {
@@ -232,14 +296,7 @@ deploy_fallback_loki_catalogsource() {
   oc apply -n openshift-marketplace -f "$ARTIFACT_DIR"/loki-fallback-cs.yaml
   echo "====> Waiting for fallback CatalogSource to be ready"
   sleep 30
-  timeout=0
-  while [ $timeout -lt 180 ]; do
-    if oc wait --timeout=30s --for=condition=ready pod -l olm.catalogSource=netobserv-loki-fallback -n openshift-marketplace; then
-      break
-    fi
-    sleep 10
-    timeout=$((timeout+10))
-  done
+  waitForPodReady "olm.catalogSource=netobserv-loki-fallback" "openshift-marketplace" 180 || true
 
   echo "====> Waiting for package manifests to be populated from fallback catalog"
   timeout=0
@@ -317,14 +374,7 @@ deploy_lokistack() {
   
   $SCRIPTS_DIR/deploy-loki-aws-secret.sh $S3_BUCKET_NAME $LOKI_NS
   sleep 60
-  timeout=0
-  while [ $timeout -lt 300 ]; do
-    if oc wait --timeout=180s --for=condition=ready pod -l app.kubernetes.io/name=loki-operator -n openshift-operators-redhat; then
-      break
-    fi
-    sleep 10
-    timeout=$((timeout+30))
-  done
+  waitForPodReady "app.kubernetes.io/name=loki-operator" "openshift-operators-redhat" || true
 
   echo "====> Determining LokiStack config"
   export SIZE=''
@@ -386,7 +436,7 @@ deploy_downstream_catalogsource() {
   oc process -f "$CatalogSource_CONFIG" -p CATALOGSOURCE_IMAGE="$DOWNSTREAM_IMAGE" -n netobserv | oc apply -n openshift-marketplace -f -
   echo "====> Creating netobserv-testing CatalogSource"
   sleep 30
-  oc wait --timeout=180s --for=condition=ready pod -l olm.catalogSource=netobserv-testing -n openshift-marketplace || return 1
+  waitForPodReady "olm.catalogSource=netobserv-testing" "openshift-marketplace" || return 1
 }
 
 deploy_upstream_catalogsource() {
@@ -403,7 +453,7 @@ deploy_upstream_catalogsource() {
   oc process -f "$CatalogSource_CONFIG" -p CATALOGSOURCE_IMAGE="$UPSTREAM_IMAGE" -n netobserv | oc apply -n openshift-marketplace -f -
   echo "====> Creating netobserv-testing CatalogSource from the main bundle"
   sleep 30
-  oc wait --timeout=180s --for=condition=ready pod -l olm.catalogSource=netobserv-testing -n openshift-marketplace || return 1
+  waitForPodReady "olm.catalogSource=netobserv-testing" "openshift-marketplace" || return 1
 }
 
 deploy_kafka() {
@@ -413,7 +463,7 @@ deploy_kafka() {
   echo "====> Creating amq-streams Subscription"
   oc apply -f $SCRIPTS_DIR/amq-streams/amq-streams-subscription.yaml
   sleep 60
-  oc wait --timeout=180s --for=condition=ready pod -l name=amq-streams-cluster-operator -n openshift-operators || return 1
+  waitForPodReady "name=amq-streams-cluster-operator" "openshift-operators" || return 1
   
   # update AMQStreams operator memory limit to 1G as current limits of 384Mi is not enough for 250 nodes scenario
   CSV_NAME=$(oc get csv -n openshift-operators -l operators.coreos.com/amq-streams.openshift-operators= -o jsonpath='{.items[].metadata.name}')
@@ -425,7 +475,7 @@ deploy_kafka() {
   oc process -f $SCRIPTS_DIR/amq-streams/nodePool.yaml -n $KAFKA_NS | oc apply -n $KAFKA_NS -f -
   echo "====> Creating kafka-cluster Kafka"
   oc process -f $SCRIPTS_DIR/amq-streams/default.yaml -n $KAFKA_NS | oc apply -n $KAFKA_NS -f -
-  oc wait --timeout=300s --for=condition=ready kafka/kafka-cluster -n $KAFKA_NS || return 1
+  waitForResource "kafka" "kafka-cluster" "$KAFKA_NS" 300 || return 1
 
   echo "====> Creating network-flows KafkaTopic"
   if [[ -z $TOPIC_PARTITIONS ]]; then
@@ -435,7 +485,7 @@ deploy_kafka() {
   fi
   oc process -f $SCRIPTS_DIR/amq-streams/kafkaTopic.yaml -p TOPIC_PARTITIONS="$TOPIC_PARTITIONS" -n $KAFKA_NS | oc apply -n $KAFKA_NS -f -
   sleep 120
-  oc wait --timeout=180s --for=condition=ready kafkatopic network-flows -n $KAFKA_NS || return 1
+  waitForResource "kafkatopic" "network-flows" "$KAFKA_NS" 180 || return 1
 
   echo "====> Creating secret-watcher RoleBinding in $KAFKA_NS"
   oc create rolebinding secret-watcher -n $KAFKA_NS --clusterrole=netobserv-secret-watcher --serviceaccount=openshift-netobserv-operator:netobserv-controller-manager 2>/dev/null || true
