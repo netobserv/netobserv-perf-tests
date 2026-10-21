@@ -178,19 +178,19 @@ tests:
         direction: 1
         threshold: 5
 
+      - name: ebpfMergedMaps
+        metric_name: ebpfMergedMaps
+        metric_of_interest: value
+        agg:
+          value: ebpf_mergedmaps
+          agg_type: avg
+        direction: 1
+        threshold: 10
       - name: ebpfFlowsDroppedRatio
         metric_name: ebpfFlowsDroppedRatio
         metric_of_interest: value
         agg:
           value: ebpf_flows_drop_ratio
-          agg_type: avg
-        direction: 1
-        threshold: 5
-      - name: ebpfRingBufferMapRatioTotals
-        metric_name: ebpfRingBufferMapRatioTotals
-        metric_of_interest: value
-        agg:
-          value: ebpf_ring_buffer_map_ratio
           agg_type: avg
         direction: 1
         threshold: 5

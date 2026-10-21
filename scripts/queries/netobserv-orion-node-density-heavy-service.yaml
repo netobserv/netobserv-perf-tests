@@ -64,15 +64,6 @@ tests:
           agg_type: avg
         direction: 1
         threshold: 5
-      - name: ebpfRingBufferMapRatioTotals
-        metric_name: ebpfRingBufferMapRatioTotals
-        timestamp: iso_timestamp
-        metric_of_interest: value
-        agg:
-          value: ebpf_ring_buffer_map_ratio
-          agg_type: avg
-        direction: 1
-        threshold: 5
       - name: cpuOperatorTotals
         metric_name: cpuOperatorTotals
         timestamp: iso_timestamp
