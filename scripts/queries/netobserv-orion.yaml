@@ -20,7 +20,7 @@ tests:
         direction: 0
         threshold: 10
       - name: nFlowsProcessedPerMinuteTotals
-        metric_name: nFlowsProcessedTotals
+        metric_name: nFlowsProcessedPerMinuteTotals
         timestamp: iso_timestamp
         metric_of_interest: value
         agg:
@@ -55,6 +55,15 @@ tests:
           agg_type: avg
         direction: 1
         threshold: 5
+      - name: unenrichedPodtrafficPerc
+        metric_name: unenrichedPodtrafficPerc
+        timestamp: iso_timestamp
+        metric_of_interest: value
+        agg:
+          value: unenriched_pod_flows_perc
+          agg_type: avg
+        direction: 1
+        threshold: 10
       - name: lokiRecordsWritten
         metric_name: lokiRecordsWritten
         timestamp: iso_timestamp
@@ -70,15 +79,6 @@ tests:
         metric_of_interest: value
         agg:
           value: ebpf_flows_drop_ratio
-          agg_type: avg
-        direction: 1
-        threshold: 5
-      - name: ebpfRingBufferMapRatioTotals
-        metric_name: ebpfRingBufferMapRatioTotals
-        timestamp: iso_timestamp
-        metric_of_interest: value
-        agg:
-          value: ebpf_ring_buffer_map_ratio
           agg_type: avg
         direction: 1
         threshold: 5
@@ -109,6 +109,15 @@ tests:
           agg_type: avg
         direction: 1
         threshold: 10
+      - name: fileDescriptorsFLP
+        metric_name: fileDescriptorsFLP
+        timestamp: iso_timestamp
+        metric_of_interest: value
+        agg:
+          value: flp_file_descriptors
+          agg_type: avg
+        direction: 1
+        threshold: 10
       - name: cpuFLPInformersTotals
         metric_name: cpuFLPInformersTotals
         timestamp: iso_timestamp
@@ -118,12 +127,30 @@ tests:
           agg_type: avg
         direction: 1
         threshold: 10
+      - name: fileDescriptorsFLPInformers
+        metric_name: fileDescriptorsFLPInformers
+        timestamp: iso_timestamp
+        metric_of_interest: value
+        agg:
+          value: flp_informers_file_descriptors
+          agg_type: avg
+        direction: 1
+        threshold: 10
       - name: cpuEBPFTotals
         metric_name: cpuEBPFTotals
         timestamp: iso_timestamp
         metric_of_interest: value
         agg:
           value: ebpf_cpu
+          agg_type: avg
+        direction: 1
+        threshold: 10
+      - name: fileDescriptorsEBPF
+        metric_name: fileDescriptorsEBPF
+        timestamp: iso_timestamp
+        metric_of_interest: value
+        agg:
+          value: ebpf_file_descriptors
           agg_type: avg
         direction: 1
         threshold: 10

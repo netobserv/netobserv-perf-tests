@@ -62,6 +62,9 @@
 - query: (sum(rate(netobserv_ingest_errors[1m])*60) by (pod) OR on() vector(0))
   metricName: nFlowsErroredPerMinute
 
+- query: 100 * (sum(rate(netobserv_workload_egress_bytes_total{SrcK8S_Type="",SrcSubnetLabel="Pods"}[1m])) + sum(rate(netobserv_workload_egress_bytes_total{DstK8S_Type="",DstSubnetLabel="Pods"}[1m]))) / (sum(rate(netobserv_workload_egress_bytes_total{SrcSubnetLabel="Pods"}[1m])) + sum(rate(netobserv_workload_egress_bytes_total{DstSubnetLabel="Pods"}[1m]))) or vector(0)
+  metricName: unenrichedPodtrafficPerc
+
 #####################
 # NetObserv metrics #
 #####################
@@ -118,10 +121,11 @@
 - query: (((sum(rate(netobserv_agent_dropped_flows_total[1m])) or on() vector(0)) / (sum(rate(netobserv_agent_evicted_flows_total[1m])) or on() vector(0))) > 0.05) or on() vector(0)
   metricName: ebpfFlowsDroppedRatio
 
-# ebpf Ring buffer/Map Ratio
-- query: ((sum(rate(netobserv_agent_evicted_flows_total{source="accounter"}[1m])) OR on() vector(0)) / (sum(rate(netobserv_agent_evicted_flows_total{source="hashmap"}[1m])) > 0)) OR on() vector(0)
-  metricName: ebpfRingBufferMapRatioTotals
+- query: sum(netobserv_agent_buffer_size{name="merged-maps"}) or on() vector(0)
+  metricName: ebpfMergedMaps
 
+- query: (sum(container_file_descriptors{namespace="netobserv-privileged", container=~"netobserv-ebpf-agent.*"}) or on() vector(0))
+  metricName: fileDescriptorsEBPF
 ###############
 # FLP metrics #
 ###############
@@ -143,6 +147,9 @@
 - query: (sum(container_memory_working_set_bytes{namespace="netobserv", container="", pod=~"flowlogs.*", pod!~"flowlogs-pipeline-informers.*"}) or on() vector(0))
   metricName: workingsetFLPTotals
 
+- query: (sum(container_file_descriptors{namespace="netobserv", container=~"flowlogs-pipeline.*", container!~"flowlogs-pipeline-informers.*"}) or on() vector(0))
+  metricName: fileDescriptorsFLP
+
 # total CPU usage by FLP Informers - per pod is not included here as that is collected above
 
 - query: (sum(pod:container_cpu_usage:sum{namespace="netobserv", pod=~"flowlogs-pipeline-informers.*"}) or on() vector(0))
@@ -155,6 +162,9 @@
 # total working set memory by all FLP Informers - per pod is not included here as that is collected above
 - query: (sum(container_memory_working_set_bytes{namespace="netobserv", container="", pod=~"flowlogs-pipeline-informers.*"}) or on() vector(0))
   metricName: workingsetFLPInformersTotals
+
+- query: (sum(container_file_descriptors{namespace="netobserv", container=~"flowlogs-pipeline-informers.*"}) or on() vector(0))
+  metricName: fileDescriptorsFLPInformers
 ####################
 # Operator metrics #
 ####################
