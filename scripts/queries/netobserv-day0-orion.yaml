@@ -185,15 +185,47 @@ tests:
           agg_type: avg
         direction: 1
         threshold: 10
-
-      - name: ebpfMergedMaps
-        metric_name: ebpfMergedMaps
+      - name: ebpfFlowMap
+        metric_name: ebpfFlowMap
         metric_of_interest: value
         agg:
-          value: ebpf_mergedmaps
+          value: ebpf_flow_map
           agg_type: avg
         direction: 1
-        threshold: 10
+        threshold: 5
+      - name: ebpfDNSMap
+        metric_name: ebpfDNSMap
+        metric_of_interest: value
+        agg:
+          value: ebpf_dns_map
+          agg_type: avg
+        direction: 1
+        threshold: 5
+      - name: ebpPktDropsMap
+        metric_name: ebpPktDropsMap
+        metric_of_interest: value
+        agg:
+          value: ebpf_pkt_drops_map
+          agg_type: avg
+        direction: 1
+        threshold: 5
+      - name: ebpfAddnlMap
+        metric_name: ebpfAddnlMap
+        metric_of_interest: value
+        agg:
+          value: ebpf_addnl_map
+          agg_type: avg
+        direction: 1
+        threshold: 5
+      - name: ebpfXlatMap
+        metric_name: ebpfXlatMap
+        metric_of_interest: value
+        agg:
+          value: ebpf_xlat_map
+          agg_type: avg
+        direction: 1
+        threshold: 5
+
       - name: fileDescriptorsEBPF
         metric_name: fileDescriptorsEBPF
         metric_of_interest: value

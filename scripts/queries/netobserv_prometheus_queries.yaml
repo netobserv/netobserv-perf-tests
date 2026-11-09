@@ -62,7 +62,23 @@
 - query: (sum(rate(netobserv_ingest_errors[1m])*60) by (pod) OR on() vector(0))
   metricName: nFlowsErroredPerMinute
 
-- query: 100 * (sum(rate(netobserv_workload_egress_bytes_total{SrcK8S_Type="",SrcSubnetLabel="Pods"}[1m])) + sum(rate(netobserv_workload_egress_bytes_total{DstK8S_Type="",DstSubnetLabel="Pods"}[1m]))) / (sum(rate(netobserv_workload_egress_bytes_total{SrcSubnetLabel="Pods"}[1m])) + sum(rate(netobserv_workload_egress_bytes_total{DstSubnetLabel="Pods"}[1m]))) or vector(0)
+- query: |
+    (
+      100 *
+      (
+        (sum(rate(netobserv_workload_egress_bytes_total{SrcK8S_Type="",SrcSubnetLabel="Pods"}[1m])) or on() vector(0))
+        +
+        (sum(rate(netobserv_workload_egress_bytes_total{DstK8S_Type="",DstSubnetLabel="Pods"}[1m])) or on() vector(0))
+      )
+      /
+      (
+        (
+          (sum(rate(netobserv_workload_egress_bytes_total{SrcSubnetLabel="Pods"}[1m])) or on() vector(0))
+          +
+          (sum(rate(netobserv_workload_egress_bytes_total{DstSubnetLabel="Pods"}[1m])) or on() vector(0))
+        ) > 0
+      )
+    ) or on() vector(0)
   metricName: unenrichedPodtrafficPerc
 
 #####################
@@ -121,8 +137,20 @@
 - query: (((sum(rate(netobserv_agent_dropped_flows_total[1m])) or on() vector(0)) / (sum(rate(netobserv_agent_evicted_flows_total[1m])) or on() vector(0))) > 0.05) or on() vector(0)
   metricName: ebpfFlowsDroppedRatio
 
-- query: sum(netobserv_agent_buffer_size{name="merged-maps"}) or on() vector(0)
-  metricName: ebpfMergedMaps
+- query: sum(netobserv_agent_buffer_size{name="flowmap"}) or on() vector(0)
+  metricName: ebpfFlowMap
+
+- query: sum(netobserv_agent_buffer_size{name="dnsmap"}) or on() vector(0)
+  metricName: ebpfDNSMap
+
+- query: sum(netobserv_agent_buffer_size{name="pktdropsmap"}) or on() vector(0)
+  metricName: ebpPktDropsMap
+  
+- query: sum(netobserv_agent_buffer_size{name="additionalmap"}) or on() vector(0)
+  metricName: ebpfAddnlMap
+
+- query: sum(netobserv_agent_buffer_size{name="xlatmap"}) or on() vector(0)
+  metricName: ebpfXlatMap
 
 - query: (sum(container_file_descriptors{namespace="netobserv-privileged", container=~"netobserv-ebpf-agent.*"}) or on() vector(0))
   metricName: fileDescriptorsEBPF
