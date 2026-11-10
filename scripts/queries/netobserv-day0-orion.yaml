@@ -177,20 +177,68 @@ tests:
           agg_type: avg
         direction: 1
         threshold: 5
+      - name: unenrichedPodtrafficPerc
+        metric_name: unenrichedPodtrafficPerc
+        metric_of_interest: value
+        agg:
+          value: unenriched_pod_flows_perc
+          agg_type: avg
+        direction: 1
+        threshold: 10
+      - name: ebpfFlowMap
+        metric_name: ebpfFlowMap
+        metric_of_interest: value
+        agg:
+          value: ebpf_flow_map
+          agg_type: avg
+        direction: 1
+        threshold: 5
+      - name: ebpfDNSMap
+        metric_name: ebpfDNSMap
+        metric_of_interest: value
+        agg:
+          value: ebpf_dns_map
+          agg_type: avg
+        direction: 1
+        threshold: 5
+      - name: ebpPktDropsMap
+        metric_name: ebpPktDropsMap
+        metric_of_interest: value
+        agg:
+          value: ebpf_pkt_drops_map
+          agg_type: avg
+        direction: 1
+        threshold: 5
+      - name: ebpfAddnlMap
+        metric_name: ebpfAddnlMap
+        metric_of_interest: value
+        agg:
+          value: ebpf_addnl_map
+          agg_type: avg
+        direction: 1
+        threshold: 5
+      - name: ebpfXlatMap
+        metric_name: ebpfXlatMap
+        metric_of_interest: value
+        agg:
+          value: ebpf_xlat_map
+          agg_type: avg
+        direction: 1
+        threshold: 5
 
+      - name: fileDescriptorsEBPF
+        metric_name: fileDescriptorsEBPF
+        metric_of_interest: value
+        agg:
+          value: ebpf_file_descriptors
+          agg_type: avg
+        direction: 1
+        threshold: 10
       - name: ebpfFlowsDroppedRatio
         metric_name: ebpfFlowsDroppedRatio
         metric_of_interest: value
         agg:
           value: ebpf_flows_drop_ratio
-          agg_type: avg
-        direction: 1
-        threshold: 5
-      - name: ebpfRingBufferMapRatioTotals
-        metric_name: ebpfRingBufferMapRatioTotals
-        metric_of_interest: value
-        agg:
-          value: ebpf_ring_buffer_map_ratio
           agg_type: avg
         direction: 1
         threshold: 5
@@ -210,11 +258,27 @@ tests:
           agg_type: avg
         direction: 1
         threshold: 10
+      - name: fileDescriptorsFLP
+        metric_name: fileDescriptorsFLP
+        metric_of_interest: value
+        agg:
+          value: flp_file_descriptors
+          agg_type: avg
+        direction: 1
+        threshold: 10
       - name: rssFLPInformersTotals
         metric_name: rssFLPInformersTotals
         metric_of_interest: value
         agg:
           value: flp_informers_rss
+          agg_type: avg
+        direction: 1
+        threshold: 10
+      - name: fileDescriptorsFLPInformers
+        metric_name: fileDescriptorsFLPInformers
+        metric_of_interest: value
+        agg:
+          value: flp_informers_file_descriptors
           agg_type: avg
         direction: 1
         threshold: 10
