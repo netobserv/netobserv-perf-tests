@@ -129,6 +129,21 @@
 - query: (sum(container_memory_working_set_bytes{namespace="netobserv-privileged", container=""}) by (container, pod, namespace, node) or on() vector(0))
   metricName: ebpfMemoryUsageWorkingSet
 
+# Current flow batches held by the agent, split by pod and node to expose hotspots
+- query: (sum(netobserv_agent_flow_batch_in_flight_bytes) by (pod, node) or on() vector(0))
+  metricName: ebpfFlowBatchInFlightBytes
+
+- query: (sum(netobserv_agent_flow_batch_in_flight_batches) by (pod, node) or on() vector(0))
+  metricName: ebpfFlowBatchInFlightBatches
+
+# Flow records forwarded from each agent's hashmap per minute
+- query: (sum(rate(netobserv_agent_evicted_flows_total{source="hashmap"}[1m]) * 60) by (pod, node) or on() vector(0))
+  metricName: ebpfFlowsEvictedPerMinuteByAgent
+
+# Batches rejected by the in-flight memory budget or exporter queue per minute
+- query: (sum(increase(netobserv_agent_dropped_flow_batches_total[1m])) by (reason, pod, node) or on() vector(0))
+  metricName: ebpfFlowBatchesDroppedPerMinute
+
 # eBPF drops
 - query: (sum(rate(netobserv_agent_dropped_flows_total[1m])) or on() vector(0))
   metricName: ebpfFlowsDroppedTotals
